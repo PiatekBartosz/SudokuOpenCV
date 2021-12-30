@@ -2,7 +2,7 @@ import time as t
 import numpy as np
 import cv2
 
-from helpers import preProcessing, findContours
+from helpers import pre_processing, find_corners, warp_img
 
 cap = cv2.VideoCapture(0)
 frameWidth = cap.get(3)
@@ -20,23 +20,21 @@ while True:
     time_passage = t.time() - previous_time
 
     ret, frame = cap.read()
- # uncomment after finishing findContours()
-    #if time_passage > 1.0 / frame_rate:
-    previous_time = t.time()
 
-    processed_frame = preProcessing(frame)
+    if time_passage > 1.0 / frame_rate:
+        previous_time = t.time()
 
-    largest_item = findContours(processed_frame)
+        processed_frame = pre_processing(frame)
 
-    result_frame = processed_frame
-    # delete after finishing findContours()
-    print(largest_item)
-    cv2.drawContours(frame, largest_item, -1, (255, 0, 0), 10)
+        corners = find_corners(processed_frame, frame)
 
-    cv2.imshow("SudokuOpenCV", frame)
+        # if corners:
+            # todo warp, matrix = warp_img(frame, corners)
 
-    if cv2.waitKey(1) == ord('q'):
-        break
+        cv2.imshow("SudokuOpenCV", frame)
+
+        if cv2.waitKey(1) == ord('q'):
+            break
 
 cap.release()
 cv2.destroyAllWindows()
