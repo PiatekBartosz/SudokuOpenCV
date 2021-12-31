@@ -49,7 +49,6 @@ def find_corners(processed_frame, frame):
             return None
 
         # draw found square
-        print(biggest)
         cv2.drawContours(frame, biggest, -1, (255, 0, 0), 10)
         return [top_left, top_right, bot_right, bot_left]
 
@@ -65,5 +64,21 @@ def find_corner_position(corners, limit, compare):
 
 
 def warp_img(frame, corners):
-    # todo warp the img
-    return None
+    # https://theailearner.com/tag/cv2-getperspectivetransform/
+
+    corners = np.array(corners, dtype='float32')
+
+    top_left, top_right, bot_right, bot_left = corners
+
+    width = int(max([
+        np.abs((top_right[0] - bot_right[0])**2+(top_right[1] - bot_right[1])**2)**0.5,
+        np.abs((top_left[0] - bot_left[0])**2+(top_left[1] - bot_left[1])**2)**0.5,
+        np.abs((top_left[0] - top_right[0])**2+(top_left[1] - top_right[1])**2)**0.5,
+        np.abs((bot_left[0] - bot_right[0])**2+(bot_left[1] - bot_right[1])**2)**0.5
+    ]))
+
+    mapping = np.array([[0, 0], [width - 1, 0], [width - 1, width - 1], [0, width - 1]], dtype='float32')
+
+    matrix = cv2.getPerspectiveTransform(corners, mapping)
+
+    return cv2.warpPerspective(frame, matrix, (width, width)), matrix

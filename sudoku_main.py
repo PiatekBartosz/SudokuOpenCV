@@ -28,13 +28,19 @@ while True:
 
         corners = find_corners(processed_frame, frame)
 
-        # if corners:
-            # todo warp, matrix = warp_img(frame, corners)
+        print(corners)
+        if corners:
+            warp, matrix = warp_img(frame, corners)
+            processed_warp = pre_processing(warp)
+            cv2.imshow("Warp", processed_warp)
+
+            # todo isolate every digit
 
         cv2.imshow("SudokuOpenCV", frame)
 
         if cv2.waitKey(1) == ord('q'):
             break
+
 
 cap.release()
 cv2.destroyAllWindows()
