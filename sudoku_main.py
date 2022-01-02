@@ -35,12 +35,22 @@ while True:
             cv2.imshow("Warp", processed_warp)
 
             # todo isolate every digit
+            horizontal_stripes = np.array_split(warp, 9, axis=0)
+            numbers = []
+            for element in horizontal_stripes:
+                stripe = np.array_split(element, 9, axis=1)
+                for element2 in stripe:
+                    numbers.append(element2)
+            cv2.imshow("test", horizontal_stripes[0])
+
+            for element in numbers:
+                element = pre_processing(element)
+            cv2.imshow("nowe", numbers[0])
 
         cv2.imshow("SudokuOpenCV", frame)
 
         if cv2.waitKey(1) == ord('q'):
             break
-
 
 cap.release()
 cv2.destroyAllWindows()
