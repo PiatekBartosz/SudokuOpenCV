@@ -71,10 +71,10 @@ def warp_img(frame, corners):
     top_left, top_right, bot_right, bot_left = corners
 
     width = int(max([
-        np.abs((top_right[0] - bot_right[0])**2+(top_right[1] - bot_right[1])**2)**0.5,
-        np.abs((top_left[0] - bot_left[0])**2+(top_left[1] - bot_left[1])**2)**0.5,
-        np.abs((top_left[0] - top_right[0])**2+(top_left[1] - top_right[1])**2)**0.5,
-        np.abs((bot_left[0] - bot_right[0])**2+(bot_left[1] - bot_right[1])**2)**0.5
+        np.abs((top_right[0] - bot_right[0]) ** 2 + (top_right[1] - bot_right[1]) ** 2) ** 0.5,
+        np.abs((top_left[0] - bot_left[0]) ** 2 + (top_left[1] - bot_left[1]) ** 2) ** 0.5,
+        np.abs((top_left[0] - top_right[0]) ** 2 + (top_left[1] - top_right[1]) ** 2) ** 0.5,
+        np.abs((bot_left[0] - bot_right[0]) ** 2 + (bot_left[1] - bot_right[1]) ** 2) ** 0.5
     ]))
 
     mapping = np.array([[0, 0], [width - 1, 0], [width - 1, width - 1], [0, width - 1]], dtype='float32')
@@ -90,3 +90,22 @@ def isolate_cells(warp):
     for stripe in horizontal_stripes:
         cells.extend(np.array_split(stripe, 9, axis=1))
     return cells
+
+
+def preprocess_cell(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.equalizeHist(img)
+    img = img / 255
+    img = cv2.resize(img, (32, 32))
+    img = np.expand_dims(img, 0)
+    return img
+
+
+def validate_predict(cell):
+    cell = cell.tolist()[0]
+    max_value = max(cell)
+
+    if max_value > 0.8:
+        return cell.index(max_value) + 1
+    else:
+        return 0
