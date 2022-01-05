@@ -82,3 +82,11 @@ def warp_img(frame, corners):
     matrix = cv2.getPerspectiveTransform(corners, mapping)
 
     return cv2.warpPerspective(frame, matrix, (width, width)), matrix
+
+
+def isolate_cells(warp):
+    horizontal_stripes = np.array_split(warp, 9, axis=0)
+    cells = []
+    for stripe in horizontal_stripes:
+        cells.extend(np.array_split(stripe, 9, axis=1))
+    return cells
