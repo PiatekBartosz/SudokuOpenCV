@@ -101,11 +101,25 @@ def preprocess_cell(img):
     return img
 
 
+def crop_cell(cell):
+    rows, cols, _ = map(int, cell.shape)
+    cropped = cell[cols//2-16:cols//2+16, rows//2-18:rows//2+18]
+    return cropped
+
+
+def identify_empty(cell):
+    data = np.asarray(cell)
+    data = data / 255
+    data = np.reshape(data, (-1, 1))
+    stddiv = np.std(data)
+    return stddiv < 0.1
+
+
 def validate_predict(cell):
     cell = cell.tolist()[0]
     max_value = max(cell)
 
-    if max_value > 0.8:
-        return cell.index(max_value) + 1
+    if max_value > 0.5:
+        return cell.index(max_value) + 1, max_value * 100
     else:
-        return 0
+        return 0, 0

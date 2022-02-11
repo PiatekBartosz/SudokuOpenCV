@@ -3,12 +3,15 @@ import numpy as np
 import cv2
 from tensorflow.keras.models import load_model
 import helpers
+import solver
 
-cap = cv2.VideoCapture(0)
+# select device number:
+device = 0
+cap = cv2.VideoCapture(device)
 
 frameWidth = cap.get(3)
 frameHeight = cap.get(4)
-frame_rate = 30
+frame_rate = 20
 cap.set(10, 150)
 
 model = load_model('OCRmodel.h5')
@@ -18,6 +21,8 @@ if not cap.isOpened():
     exit()
 
 previous_time = 0
+
+seen = dict()
 
 while True:
     time_passage = t.time() - previous_time
@@ -38,22 +43,24 @@ while True:
             cells = helpers.isolate_cells(warp)
 
             if cells[0].shape[0] > 40:
-                result = []
-
-                temp = cells[75]
-                temp = cv2.cvtColor(temp, cv2.COLOR_BGR2GRAY)
-                temp = cv2.equalizeHist(temp)
-                cv2.imshow('', temp)
+                squares_guesses = []
 
                 for cell in cells:
-                    cell = helpers.preprocess_cell(cell)
-                    predict = model.predict(cell)
+                    cell = helpers.crop_cell(cell)
+                    if helpers.identify_empty(cell):
+                        squares_guesses.append(0)
+                    else:
+                        cell = helpers.preprocess_cell(cell)
+                        number, predict = helpers.validate_predict(model.predict(cell))
+                        squares_guesses.append(number)
 
-                    result.append(helpers.validate_predict(predict))
+                squares_guesses = np.reshape(squares_guesses, (9, 9))
+                print(squares_guesses)
+                solution = solver.compute(squares_guesses)
+                print(next(solution))
 
-                result = np.array(result)
-                result = result.reshape((9, 9))
-                print(result)
+
+
 
         cv2.imshow("SudokuOpenCV", frame)
 
@@ -62,13 +69,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-sudoku = np.array = [[0, 0, 0, 0, 0, 0, 0, 1, 0],
-                     [0, 0, 0, 0, 0, 2, 0, 0, 3],
-                     [0, 0, 0, 4, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                     [0, 0, 0, 0, 0, 0, 5, 0, 0],
-                     [6, 0, 1, 7, 0, 0, 0, 0, 0],
-                     [0, 0, 4, 1, 0, 0, 0, 0, 0],
-                     [0, 5, 0, 0, 0, 0, 2, 0, 0],
-                     [0, 0, 0, 0, 0, 8, 0, 6, 0],
-                     [0, 3, 0, 9, 1, 0, 0, 0, 0]]
