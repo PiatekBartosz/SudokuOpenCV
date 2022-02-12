@@ -103,7 +103,7 @@ def preprocess_cell(img):
 
 def crop_cell(cell):
     rows, cols, _ = map(int, cell.shape)
-    cropped = cell[cols//2-16:cols//2+16, rows//2-18:rows//2+18]
+    cropped = cell[cols // 2 - 16:cols // 2 + 16, rows // 2 - 18:rows // 2 + 18]
     return cropped
 
 
@@ -119,7 +119,31 @@ def validate_predict(cell):
     cell = cell.tolist()[0]
     max_value = max(cell)
 
-    if max_value > 0.5:
+    if max_value > 0.8:
         return cell.index(max_value) + 1, max_value * 100
     else:
         return 0, 0
+
+
+def put_digits(warp, numbers):
+    font = cv2.FONT_HERSHEY_COMPLEX
+    row, col = warp.shape[:2]
+    step_row = row // 9
+    step_col = col // 9
+    for i, x in enumerate(range(step_row // 2, row, step_row)):
+        for j, y in enumerate(range(step_col // 2, col, step_col)):
+            text = str(numbers[i][j])
+            text_size = cv2.getTextSize(text, font, 1, 2)[0]
+            cv2.putText(warp, text, (x - text_size[0]//2, y + text_size[1]//2), font, 1, (0, 0, 255), 2)
+
+    return
+
+
+def draw_solution(warp, frame, corners, width, height):
+    pts2 = np.float32(corners)
+    pts1 = np.float32([[0, 0], [width - 1, 0], [0, height - 1], [width - 1, height - 1]])
+    matrix = cv2.getPerspectiveTransform(pts2, pts1)
+    warped = cv2.warpPerspective(frame, matrix, (width, height))
+    #final = cv2.addWeighted(warped, 1, frame, 0.5, 1)
+    cv2.imshow("test", warped)
+    return None
