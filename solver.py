@@ -1,6 +1,5 @@
 """
-This module finds the solution of a given sudoku problem
-Code credits: Tim Ruscica
+Code author: Tim Ruscica
 More info: https://techwithtim.net/tutorials/python-programming/sudoku-solver-backtracking/
 """
 

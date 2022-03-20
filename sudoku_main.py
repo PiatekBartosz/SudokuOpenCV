@@ -15,7 +15,7 @@ cap = cv2.VideoCapture(device)
 
 frameWidth = cap.get(3)
 frameHeight = cap.get(4)
-frame_rate = 24
+frame_rate = 30
 cap.set(10, 150)
 
 model = load_model('OCRmodel.h5')
@@ -43,7 +43,7 @@ while True:
         corners = helpers.find_corners(processed_frame, frame)
 
         if corners:
-            warp, matrix = helpers.warp_img(original_img, corners)
+            warp, matrix, inverse_matrix = helpers.warp_img(original_img, corners)
             cells = helpers.isolate_cells(warp)
 
             if cells[0].shape[0] > 40:
@@ -65,8 +65,8 @@ while True:
                     except:
                         pass
                     helpers.put_digits(warp, squares_guesses)
-                    cv2.imshow('warp', warp)
-                    helpers.draw_solution(warp, frame, corners, int(frameWidth), int(frameHeight))
+                    # solution = helpers.draw_solution(warp, frame, corners, int(frameWidth), int(frameHeight), inverse_matrix)
+                    # cv2.imshow("soulution", solution)
 
         cv2.imshow("SudokuOpenCV", frame)
 

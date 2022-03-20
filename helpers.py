@@ -78,10 +78,9 @@ def warp_img(frame, corners):
     ]))
 
     mapping = np.array([[0, 0], [width - 1, 0], [width - 1, width - 1], [0, width - 1]], dtype='float32')
-
     matrix = cv2.getPerspectiveTransform(corners, mapping)
-
-    return cv2.warpPerspective(frame, matrix, (width, width)), matrix
+    inverse_matrix = cv2.getPerspectiveTransform(mapping, corners)
+    return cv2.warpPerspective(frame, matrix, (width, width)), matrix, inverse_matrix
 
 
 def isolate_cells(warp):
@@ -135,15 +134,10 @@ def put_digits(warp, numbers):
             text = str(numbers[i][j])
             text_size = cv2.getTextSize(text, font, 1, 2)[0]
             cv2.putText(warp, text, (x - text_size[0]//2, y + text_size[1]//2), font, 1, (0, 0, 255), 2)
-
     return
 
 
-def draw_solution(warp, frame, corners, width, height):
-    pts2 = np.float32(corners)
-    pts1 = np.float32([[0, 0], [width - 1, 0], [0, height - 1], [width - 1, height - 1]])
-    matrix = cv2.getPerspectiveTransform(pts2, pts1)
-    warped = cv2.warpPerspective(frame, matrix, (width, height))
-    #final = cv2.addWeighted(warped, 1, frame, 0.5, 1)
-    cv2.imshow("test", warped)
-    return None
+def draw_solution(warp, frame, corners, width, height, invmatrix):
+    warp_width, warp_height, _ = warp.shape
+    rewarp = cv2.warpPerspective(warp, invmatrix, (width, height))
+    return cv2.addWeighted(frame, 1, rewarp, 1, 0.0)
