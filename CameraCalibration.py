@@ -1,16 +1,10 @@
 import numpy as np
 import cv2 as cv
 import time as t
+import glob
 
 # settings
-chessboard_size = (6, 5)
-cam_number = 0
-
-cap = cv.VideoCapture(cam_number)
-frame_rate = 30
-previous_time = 0
-width = cap.get(3)
-height = cap.get(4)
+chessboard_size = (9, 7)
 
 # termination criteria
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -23,43 +17,46 @@ objp[:, :2] = np.mgrid[0:chessboard_size[0], 0:chessboard_size[1]].T.reshape(-1,
 obj_points = []  # 3D points in real world
 img_points = []  # 2D points on captured frame
 
-while True:
-    # camera frame rate
-    time_elapsed = t.time() - previous_time
-    ret, img = cap.read()
+# get path and name for all jpgs
+images = glob.glob('CameraCalibrationPhotos/*.jpg')
 
-    if time_elapsed > 1.0 / frame_rate:
-        previous_time = t.time()
-        img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+for location in images:
+    img = cv.imread(location)
+    img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-        # find the chessboard corners
-        ret, corners = cv.findChessboardCorners(img_gray, (chessboard_size[0], chessboard_size[1]), None)
+    # find the chessboard corners
+    ret, corners = cv.findChessboardCorners(img_gray, (chessboard_size[0], chessboard_size[1]), None)
 
-        if ret:
-            obj_points.append(objp)
+    if ret:
+        obj_points.append(objp)
 
-            corners2 = cv.cornerSubPix(img_gray, corners, (11, 11), (-1, -1), criteria)
-            img_points.append(corners)
+        corners2 = cv.cornerSubPix(img_gray, corners, (11, 11), (-1, -1), criteria)
+        img_points.append(corners)
 
-            cv.drawChessboardCorners(img, (chessboard_size[0], chessboard_size[1]), corners2, ret)
+        cv.drawChessboardCorners(img, (chessboard_size[0], chessboard_size[1]), corners2, ret)
 
-            # camera calibrated bool, camera matrix, distortion parameters, rotation vectors, translation vectors
-            ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(obj_points, img_points, img.shape[:2], None, None)
+        ret, camera_matrix, distortion, rotation_vectors, translation_vectors = cv.calibrateCamera(obj_points,
+                                                                                                   img_points,
+                                                                                                   img.shape[:2], None,
+                                                                                                   None)
 
-            newCameraMatrix, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (width, height), 1, (width, height))
+        cv.imshow('CameraCalibration', img)
+        cv.waitKey(50)
 
-            # undistort
-            dst = cv.undistort(img, mtx, dist, None, newCameraMatrix)
+# undistort the image
+for img in images:
+    img = cv.imread(img)
+    h, w = img.shape[:2]
+    new_camera_matrix, roi = cv.getOptimalNewCameraMatrix(camera_matrix, distortion, (w, h), 1, (w, h))
+    dst = cv.undistort(img, camera_matrix, distortion, None, new_camera_matrix)
 
-            # crop the img
-            x, y, w, h = roi
-            img = dst[y:y+h, x:x+w]
+    # crop the img
+    x, y, w, h = roi
+    dst = dst[y:y + h, x:x + w]
 
+    cv.imshow("Calibratied img", dst)
+    cv.waitKey(1000)
 
-    cv.imshow("OpenCV Cam Calibration", img)
-
-    if cv.waitKey(1) == ord('q'):
-        break
-
-cap.release()
 cv.destroyAllWindows()
+
+# TODO save the calibration to a file
