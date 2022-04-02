@@ -1,6 +1,13 @@
 import cv2
 import numpy as np
+import glob
+import json
 
+# todo camera calibration in main
+def calibrate_camera():
+    jlist = glob.glob("CalibrationData/*.json")
+    test = json.load(jlist[0])
+    return None
 
 def pre_processing(img):
     # https://www.geeksforgeeks.org/text-detection-and-extraction-using-opencv-and-ocr/
