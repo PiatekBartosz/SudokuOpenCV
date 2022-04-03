@@ -19,7 +19,7 @@ obj_points = []  # 3D points in real world
 img_points = []  # 2D points on captured frame
 
 # get path and name for all jpgs
-images = glob.glob('**/CameraCalibrationPhotos/*.jpg')
+images = glob.glob('CameraCalibrationPhotos/*.jpg')
 
 for location in images:
     img = cv.imread(location)
@@ -63,7 +63,7 @@ cv.destroyAllWindows()
 # save camera calibration data to json file
 data = {"ret": ret, "camera_matrix": camera_matrix.tolist(), "dist": distortion.tolist()}
 
-fname = "CalibrationData/CameraCalibrationData.json"
+fname = "CameraCalibrationData.json"
 
 with open(fname, "w") as f:
     json.dump(data, f)
