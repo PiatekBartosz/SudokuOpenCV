@@ -60,7 +60,7 @@ for img in images:
 
 cv.destroyAllWindows()
 
-save camera calibration data to json file
+# save camera calibration data to json file
 data = {"ret": ret, "camera_matrix": camera_matrix.tolist(), "dist": distortion.tolist()}
 
 fname = "CalibrationData/CameraCalibrationData.json"
