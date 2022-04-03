@@ -13,10 +13,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 device = 0
 cap = cv2.VideoCapture(device)
 
-frameWidth = cap.get(3)
-frameHeight = cap.get(4)
+frameWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+frameHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 frame_rate = 30
-cap.set(10, 150)
+
+# calibrate camera
+helpers.calibrate_camera()
+
+cap.set(cv2.CAP_PROP_BRIGHTNESS, 150)
 
 model = load_model('OCRmodel.h5')
 
