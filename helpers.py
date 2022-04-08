@@ -10,7 +10,7 @@ def calibrate_camera(cameraCalibrationPath, frameHeight, frameWidth):
     camera_matrix = np.array(data['camera_matrix'])
     distortion = np.array(data['dist'])
 
-    new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion, (int(frameWidth), int(frameHeight)), 1, (int(frameWidth), int(frameHeight)))
+    new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion, (frameWidth, frameHeight), 1, (frameWidth, frameHeight))
     return roi, camera_matrix, distortion, new_camera_matrix
 
 
@@ -53,7 +53,7 @@ def find_corners(processed_frame, frame):
         approx = cv2.approxPolyDP(i, 0.01 * perimeter, closed=True)
 
         # check if it has 4 corners
-        if len(approx) == 4 and area > 1000:
+        if len(approx) == 4 and area > 2000:
             biggest = approx
             break
 
@@ -116,16 +116,20 @@ def isolate_cells(warp):
 def preprocess_cell(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = cv2.equalizeHist(img)
+    img = cv2.resize(img, (28, 28))
     img = img / 255
-    img = cv2.resize(img, (32, 32))
     img = np.expand_dims(img, 0)
     return img
 
 
 def crop_cell(cell):
     rows, cols, _ = map(int, cell.shape)
-    cropped = cell[cols // 2 - 16:cols // 2 + 16, rows // 2 - 18:rows // 2 + 18]
-    return cropped
+    x0 = cols//2
+    y0 = rows//2
+    dx = (cols//5)*2
+    dy = (rows//5)*2
+    cell = cell[x0 - dx : x0 + dx, y0 - dy : y0 + dy]
+    return cell
 
 
 def identify_empty(cell):

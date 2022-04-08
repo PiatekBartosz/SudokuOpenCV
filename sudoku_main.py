@@ -16,8 +16,8 @@ cap = cv2.VideoCapture(device)
 # default camera calibration path
 cameraCalibrationPath = "CalibrationData\CameraCalibrationData.json"
 
-frameWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-frameHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+frameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_rate = 30
 
 # calibrate camera
@@ -25,7 +25,8 @@ roi, camera_matrix, distortion, new_camera_matrix = helpers.calibrate_camera(cam
 
 cap.set(cv2.CAP_PROP_BRIGHTNESS, 150)
 
-model = load_model("OCRmodel.h5")
+model = load_model("CodeLabsDigitRecognition"
+                   ".h5")
 
 if not cap.isOpened():
     print("Cannot open camera")
@@ -53,26 +54,29 @@ while True:
         if corners:
             warp, matrix, inverse_matrix = helpers.warp_img(original_img, corners)
             cells = helpers.isolate_cells(warp)
-
-            if cells[0].shape[0] > 40:
+            cv2.imshow("warp", warp)
+            if warp.shape[0] > frameHeight * 0.5:
                 squares_guesses = []
 
                 for cell in cells:
                     cell = helpers.crop_cell(cell)
                     if helpers.identify_empty(cell):
-                        squares_guesses.append(0)
+                        squares_guesses.append('b')
                     else:
+                        cv2.imshow("cropped", cell)
                         cell = helpers.preprocess_cell(cell)
-                        number, predict = helpers.validate_predict(model.predict(cell))
-                        squares_guesses.append(number)
+                        model_raw_output = model.predict(cell)
+                        number = np.argmax(model_raw_output, axis=1)
+                        squares_guesses.append(number[0])
                 squares_guesses = np.array_split(squares_guesses, 9)
+                print(squares_guesses)
 
-                if solver.possible(squares_guesses):
-                    try:
-                        solver.solve(squares_guesses)
-                    except:
-                        pass
-                    helpers.put_digits(warp, squares_guesses)
+                # if solver.possible(squares_guesses):
+                #     try:
+                #         solver.solve(squares_guesses)
+                #     except:
+                #         pass
+                    # helpers.put_digits(warp, squares_guesses)
                     # solution = helpers.draw_solution(warp, frame, corners, int(frameWidth), int(frameHeight), inverse_matrix)
                     # cv2.imshow("soulution", solution)
 
