@@ -13,16 +13,19 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 device = 0
 cap = cv2.VideoCapture(device)
 
+# default camera calibration path
+cameraCalibrationPath = "CalibrationData\CameraCalibrationData.json"
+
 frameWidth = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 frameHeight = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 frame_rate = 30
 
 # calibrate camera
-helpers.calibrate_camera()
+roi, camera_matrix, distortion, new_camera_matrix = helpers.calibrate_camera(cameraCalibrationPath, frameHeight, frameWidth)
 
 cap.set(cv2.CAP_PROP_BRIGHTNESS, 150)
 
-model = load_model('OCRmodel.h5')
+model = load_model("OCRmodel.h5")
 
 if not cap.isOpened():
     print("Cannot open camera")
@@ -35,6 +38,7 @@ seen = dict()
 while True:
     time_passage = t.time() - previous_time
     ret, frame = cap.read()
+    frame = helpers.undistort_camera(frame, roi, camera_matrix, distortion, new_camera_matrix)
 
     if time_passage > 1.0 / frame_rate:
         previous_time = t.time()

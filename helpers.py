@@ -3,11 +3,26 @@ import numpy as np
 import glob
 import json
 
-# todo camera calibration in main
-def calibrate_camera():
-    jlist = glob.glob("CalibrationData/*.json")
-    test = json.load(jlist[0])
-    return None
+
+def calibrate_camera(cameraCalibrationPath, frameHeight, frameWidth):
+    f = open(cameraCalibrationPath)
+    data = json.load(f)
+    camera_matrix = np.array(data['camera_matrix'])
+    distortion = np.array(data['dist'])
+
+    new_camera_matrix, roi = cv2.getOptimalNewCameraMatrix(camera_matrix, distortion, (int(frameWidth), int(frameHeight)), 1, (int(frameWidth), int(frameHeight)))
+    return roi, camera_matrix, distortion, new_camera_matrix
+
+
+def undistort_camera(frame, roi, camera_matrix, distortion, new_camera_matrix):
+    dst = cv2.undistort(frame, camera_matrix, distortion, None, new_camera_matrix)
+
+    # crop the img
+    x, y, w, h = roi
+    dst = dst[y:y + h, x:x + w]
+
+    return dst
+
 
 def pre_processing(img):
     # https://www.geeksforgeeks.org/text-detection-and-extraction-using-opencv-and-ocr/
@@ -140,7 +155,7 @@ def put_digits(warp, numbers):
         for j, y in enumerate(range(step_col // 2, col, step_col)):
             text = str(numbers[i][j])
             text_size = cv2.getTextSize(text, font, 1, 2)[0]
-            cv2.putText(warp, text, (x - text_size[0]//2, y + text_size[1]//2), font, 1, (0, 0, 255), 2)
+            cv2.putText(warp, text, (x - text_size[0] // 2, y + text_size[1] // 2), font, 1, (0, 0, 255), 2)
     return
 
 
