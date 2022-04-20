@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import glob
 import json
+import matplotlib.pyplot as plt
 
 
 def calibrate_camera(cameraCalibrationPath, frameHeight, frameWidth):
@@ -115,20 +116,26 @@ def isolate_cells(warp):
 
 def preprocess_cell(img):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = cv2.equalizeHist(img)
+    img = cv2.bitwise_not(img)
     img = cv2.resize(img, (28, 28))
     img = img / 255
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if img[i][j] < 0.5:
+                img[i][j] = 0
     img = np.expand_dims(img, 0)
     return img
 
 
 def crop_cell(cell):
+    # 80 %
     rows, cols, _ = map(int, cell.shape)
     x0 = cols//2
     y0 = rows//2
-    dx = (cols//5)*2
-    dy = (rows//5)*2
+    dx = int(cols*0.4)
+    dy = int(rows*0.4)
     cell = cell[x0 - dx : x0 + dx, y0 - dy : y0 + dy]
+    rows, cols, _ = map(int, cell.shape)
     return cell
 
 
@@ -155,15 +162,18 @@ def put_digits(warp, numbers):
     row, col = warp.shape[:2]
     step_row = row // 9
     step_col = col // 9
+    warp_blanc = warp * 0
     for i, x in enumerate(range(step_row // 2, row, step_row)):
         for j, y in enumerate(range(step_col // 2, col, step_col)):
             text = str(numbers[i][j])
             text_size = cv2.getTextSize(text, font, 1, 2)[0]
-            cv2.putText(warp, text, (x - text_size[0] // 2, y + text_size[1] // 2), font, 1, (0, 0, 255), 2)
-    return
+            cv2.putText(warp_blanc, text, (x - text_size[0] // 2, y + text_size[1] // 2), font, 1, (0, 0, 255), 2)
+    return warp_blanc
 
 
 def draw_solution(warp, frame, corners, width, height, invmatrix):
     warp_width, warp_height, _ = warp.shape
     rewarp = cv2.warpPerspective(warp, invmatrix, (width, height))
-    return cv2.addWeighted(frame, 1, rewarp, 1, 0.0)
+    gray = cv2.cvtColor(rewarp, cv2.COLOR_RGB2GRAY)
+    result = cv2.addWeighted(rewarp, 0.6, frame, 0.4, 5)
+    return result

@@ -6,6 +6,7 @@ import time
 import helpers
 import solver
 import os
+import matplotlib.pyplot as plt
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -54,32 +55,28 @@ while True:
         if corners:
             warp, matrix, inverse_matrix = helpers.warp_img(original_img, corners)
             cells = helpers.isolate_cells(warp)
-            cv2.imshow("warp", warp)
             if warp.shape[0] > frameHeight * 0.5:
                 squares_guesses = []
 
                 for cell in cells:
                     cell = helpers.crop_cell(cell)
                     if helpers.identify_empty(cell):
-                        squares_guesses.append('b')
+                        squares_guesses.append(0)
                     else:
-                        cv2.imshow("cropped", cell)
                         cell = helpers.preprocess_cell(cell)
                         model_raw_output = model.predict(cell)
-                        number = np.argmax(model_raw_output, axis=1)
-                        squares_guesses.append(number[0])
+                        number, probability = helpers.validate_predict(model_raw_output)
+                        squares_guesses.append(number)
                 squares_guesses = np.array_split(squares_guesses, 9)
-                print(squares_guesses)
+                print(np.matrix(squares_guesses))
 
-                # if solver.possible(squares_guesses):
-                #     try:
-                #         solver.solve(squares_guesses)
-                #     except:
-                #         pass
-                    # helpers.put_digits(warp, squares_guesses)
-                    # solution = helpers.draw_solution(warp, frame, corners, int(frameWidth), int(frameHeight), inverse_matrix)
-                    # cv2.imshow("soulution", solution)
-
+                if solver.possible(squares_guesses):
+                    try:
+                        solver.solve(squares_guesses)
+                    except:
+                        pass
+                    warp_blanc = helpers.put_digits(warp, squares_guesses)
+                    frame = helpers.draw_solution(warp_blanc, frame, corners, frame.shape[1], frame.shape[0], inverse_matrix)
         cv2.imshow("SudokuOpenCV", frame)
 
         if cv2.waitKey(1) == ord('q'):
